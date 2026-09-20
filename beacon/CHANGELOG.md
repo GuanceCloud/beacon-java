@@ -4,6 +4,13 @@
 
 ## Unreleased
 
+### 上游同步
+
+- 合入官方 OTel Java Instrumentation [v2.31.1](https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/tag/v2.31.1)，固定提交 `8ad06a082e051f366f19c16ad95a7b68edf30afd`；采用其配套 SDK 1.65.0、依赖约束及 Gradle Wrapper。
+- 保留 JDBC 旧配置兼容、Profiling、Spring AI、Alibaba Agent、HSF 等下游实现，以及 Beacon 打包与工作流隔离；Beacon 产品版本仍为 `0.1.0-SNAPSHOT`，不是一次产品发行。
+- 上游 2.31.x 含非稳定 API 变更及配置弃用，升级时查看根目录[上游 Changelog](../CHANGELOG.md)；2.31.1 修复 Spring Boot autoconfigure/starter 的稳定语义约定 API 编译依赖。
+- 修正 Profiling 元数据的 YAML 描述语法和默认值表示，补充文件导出路径的实际默认值；不改变运行时配置或行为。
+
 ### 工程与发行
 
 - 产品主线使用 `main`，保留完整上游历史和 GuanceCloud 下游增强。

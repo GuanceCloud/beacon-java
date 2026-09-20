@@ -7,7 +7,7 @@
   },
   "upstream": {
     "repository": "https://github.com/open-telemetry/opentelemetry-java-instrumentation.git",
-    "releaseTag": "v2.30.0",
-    "releaseCommit": "080c1d32ca676ba7b0210c21b60cce8e7ac39058"
+    "releaseTag": "v2.31.1",
+    "releaseCommit": "8ad06a082e051f366f19c16ad95a7b68edf30afd"
   }
 }
