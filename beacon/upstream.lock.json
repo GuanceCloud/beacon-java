@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "product": "Beacon Java",
+  "productVersion": null,
+  "status": "local-initialization",
+  "import": {
+    "repository": "https://github.com/GuanceCloud/opentelemetry-java-instrumentation.git",
+    "branch": "guance-v2",
+    "commit": "73a8f7edd0415f0e8651d3d1f3f295e6e6d4d1ea",
+    "stableBuildVersion": "2.30.2",
+    "alphaBuildVersion": "2.30.2-alpha"
+  },
+  "upstream": {
+    "repository": "https://github.com/open-telemetry/opentelemetry-java-instrumentation.git",
+    "releaseTag": "v2.30.0",
+    "releaseCommit": "080c1d32ca676ba7b0210c21b60cce8e7ac39058",
+    "localRef": "refs/upstream-tags/v2.30.0",
+    "verification": "release-commit-is-ancestor-of-import-commit",
+    "verifiedDate": "2026-09-20"
+  },
+  "validation": {
+    "sourceHistory": "full-clone",
+    "downstreamDiffAudit": "pending",
+    "build": "not-run",
+    "runtimeTests": "not-run"
+  }
+}

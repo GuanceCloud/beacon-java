@@ -1,3 +1,11 @@
+# Beacon Java
+
+GuanceCloud 基于完整 OpenTelemetry Java Instrumentation 源码维护的下游发行工程。
+
+- 产品分支：`beacon`；导入来源：旧 GuanceCloud 仓库的 `guance-v2`。
+- [Beacon 开发入口](beacon/README.md) · [基线记录](beacon/upstream.lock.json) · [上游同步](beacon/UPSTREAM.md) · [发行流程](beacon/RELEASING.md)
+- 当前仅完成本地初始化，没有发布 Beacon 制品。下方保留上游说明，其中下载链接和徽章属于 OpenTelemetry，不是 Beacon 发布状态。
+
 # OpenTelemetry Instrumentation for Java
 
 [![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-java-instrumentation?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/)
