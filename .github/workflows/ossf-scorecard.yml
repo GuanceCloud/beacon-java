@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   analysis:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-latest
     permissions:
       # Needed for Code scanning upload
@@ -52,7 +53,7 @@ jobs:
       issues: write
     needs:
       - analysis
-    if: always()
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always()) }}
     uses: open-telemetry/shared-workflows/.github/workflows/workflow-failure-issue.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
     with:
       success: ${{ needs.analysis.result == 'success' }}

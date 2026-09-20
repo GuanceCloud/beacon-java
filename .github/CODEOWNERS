@@ -1,6 +1,3 @@
-#
-# Learn about membership in OpenTelemetry community:
-#  https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md
-#
-
-* @open-telemetry/java-instrumentation-approvers
+# Beacon maintainers must be confirmed by the GuanceCloud repository administrators.
+# No CODEOWNERS rule is active until valid maintainers with repository access are assigned.
+# Do not inherit ownership from the upstream OpenTelemetry organization.

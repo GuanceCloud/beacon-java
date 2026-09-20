@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   generate:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -52,6 +53,7 @@ jobs:
 
   # separate job is just to isolate the OTELBOT_JAVA_INSTRUMENTATION_PRIVATE_KEY usage a bit
   apply:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-latest
     needs: generate
     steps:

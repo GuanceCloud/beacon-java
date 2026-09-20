@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   comment-on-breaking-change:
-    if: contains(github.event.label.name, 'breaking change')
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (contains(github.event.label.name, 'breaking change')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR
@@ -61,7 +61,7 @@ jobs:
             }
 
   comment-on-deprecation:
-    if: contains(github.event.label.name, 'deprecation')
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (contains(github.event.label.name, 'deprecation')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR

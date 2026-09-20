@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   update-cloudfoundry-index-yml:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: write # for git push to PR branch
     runs-on: ubuntu-latest
@@ -68,7 +69,7 @@ jobs:
       issues: write
     needs:
       - update-cloudfoundry-index-yml
-    if: always()
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always()) }}
     uses: open-telemetry/shared-workflows/.github/workflows/workflow-failure-issue.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
     with:
       success: ${{ needs.update-cloudfoundry-index-yml.result == 'success' }}

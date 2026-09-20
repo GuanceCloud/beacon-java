@@ -1,170 +1,61 @@
-# Contributing
+# 贡献指南
 
-Pull requests for bug fixes are always welcome!
+Beacon Java 的功能、缺陷和 PR 在本仓库处理，PR 目标分支为 `main`。涉及通用 OpenTelemetry 行为的改进，在本仓库明确复现和影响后，再按上游贡献流程提交。
 
-Before submitting new features or changes to current functionality, it is recommended to first
-[open an issue](https://github.com/open-telemetry/opentelemetry-java-instrumentation/issues/new)
-and discuss your ideas or propose the changes you wish to make.
+## 开发准备
 
-## Changelog
-
-The changelog is generated from merged pull requests. Do not add a changelog entry for normal
-changes. Add an entry only for a deprecation or breaking change, where the hand-written entry is
-useful for double-checking the generated changelog.
-
-## Breaking Changes
-
-When your PR introduces a breaking change:
-
-- Add the `breaking change` label to your PR
-  - If you can't add labels directly, post a comment containing only `/breaking-change` and the label will be added automatically
-- Add an entry to the `Unreleased` section of `CHANGELOG.md`
-- Provide migration notes in the PR description:
-  - What is changing and why
-  - How users should update their code/configuration
-  - Code examples showing before/after usage (if applicable)
-
-**When to Use:**
-
-- API changes that break backward compatibility
-- Configuration changes that require user action
-- Behavioral changes that might affect existing users
-- Removal of deprecated features
-
-## Deprecations
-
-When your PR deprecates functionality:
-
-- Add the `deprecation` label to your PR
-  - If you can't add labels directly, post a comment containing only `/deprecation` and the label will be added automatically
-- Add an entry to the `Unreleased` section of `CHANGELOG.md`
-- Provide deprecation details in the PR description:
-  - What is being deprecated and why
-  - What should be used instead (if applicable)
-  - Timeline for removal (if known)
-  - Any migration guidance
-
-## Building
-
-This project requires Java 21 to build and run tests. Newer JDK's may work, but this version is used in CI.
-
-Some instrumentations and tests may put constraints on which java versions they support.
-See [Running the tests](./docs/contributing/running-tests.md) for more details.
-
-### Snapshot builds
-
-For developers testing code changes before a release is complete, snapshot builds of the `main`
-branch are available from the Sonatype snapshot repository at `https://central.sonatype.com/repository/maven-snapshots/`.
-
-To find the latest snapshot, check the maven metadata (replace `{LATEST_VERSION}` with the current
-stable release):
-
-```
-https://central.sonatype.com/repository/maven-snapshots/io/opentelemetry/javaagent/opentelemetry-javaagent/{LATEST_VERSION}-SNAPSHOT/maven-metadata.xml
-```
-
-Look for the `<timestamp>` and `<buildNumber>` in the XML response, then construct the download URL:
-
-```
-https://central.sonatype.com/repository/maven-snapshots/io/opentelemetry/javaagent/opentelemetry-javaagent/{VERSION}-SNAPSHOT/opentelemetry-javaagent-{VERSION}-{TIMESTAMP}-{BUILD_NUMBER}.jar
-```
-
-For example, if the metadata shows timestamp `20250925.160708` and build number `56` for version
-`2.21.0`, the snapshot JAR URL would be:
-
-```
-https://central.sonatype.com/repository/maven-snapshots/io/opentelemetry/javaagent/opentelemetry-javaagent/2.21.0-SNAPSHOT/opentelemetry-javaagent-2.21.0-20250925.160708-56.jar
-```
-
-### Building from source
-
-Build using Java 21:
+使用 Git 完整克隆和 JDK 21，在仓库根目录执行以下命令。仅配置 remote 不会自动获取历史或改变 GitHub 默认分支。
 
 ```bash
 java -version
+./gradlew :javaagent:assemble
 ```
+
+完整 Agent 产物为 `javaagent/build/libs/beacon-javaagent-<Beacon版本>.jar`，产品版本由 [beacon/version.properties](beacon/version.properties) 唯一定义。`assemble` 同时校验制品名称、Manifest 产品标识和内嵌上游来源；这不替代功能测试或正式发行验收。
+
+[Beacon 打包配置](beacon/agent.gradle.kts)只定制完整 Agent 的文件名、Manifest 和来源记录，不替换上游模块版本、Maven 坐标或 Java 包名。[version.gradle.kts](version.gradle.kts)继续管理继承的模块构建版本，OTel 官方来源单独记录在[基线文件](beacon/upstream.lock.json)。`base`、`dontuse` 等内部辅助 JAR 不是 Beacon 安装包。
+
+不要把官方 Sonatype 快照当作 Beacon 快照，当前没有 Beacon 快照发布渠道。
+
+## 修改与测试
+
+- 原生插桩改动放在对应上游模块，保留既有布局、包名和许可证。
+- 实现与回归测试在同一 PR 提交，说明用户可见影响、配置变化和兼容范围。
+- 普通功能 PR 可按团队规则整理提交；上游同步 PR 必须保留上游祖先关系。
+- 用户可见变化写入 [Beacon Changelog](beacon/CHANGELOG.md) 的 `Unreleased`；详细实现和测试证据保留在 PR/CI，不另建差异台账。破坏性变化必须提供迁移说明。
+- 根目录 [CHANGELOG.md](CHANGELOG.md)保留上游日志；Beacon 日志不重复抄录上游全部变化。当前日志手工维护，不依赖上游标签机器人。
+
+## 技术参考
+
+- [代码风格](docs/contributing/style-guide.md)
+- [测试运行](docs/contributing/running-tests.md)
+- [编写 instrumentation](docs/contributing/writing-instrumentation.md)
+- [Agent 结构](docs/contributing/javaagent-structure.md)
+- [Muzzle 兼容检查](docs/contributing/muzzle.md)
+- [调试](docs/contributing/debugging.md)
+- [IntelliJ 配置](docs/contributing/intellij-setup-and-troubleshooting.md)
+
+这些技术文档随所采用的源码维护。不要将其中的上游发布地址、组织权限或机器人行为直接视作 Beacon 已有能力。
+
+## 维护工具验证
+
+上游标签抓取脚本只依赖 Bash 和 Git。修改脚本后运行以下测试，测试另需 Node.js 18 或更高版本：
 
 ```bash
-./gradlew assemble
+bash -n beacon/scripts/fetch-upstream-tag.sh
+node --test beacon/scripts/fetch-upstream-tag.test.cjs
 ```
 
-and then you can find the java agent artifact at
+脚本测试只使用临时本地 Git 仓库，不访问网络，不运行源码合并或发布。
 
-`javaagent/build/libs/opentelemetry-javaagent-<version>.jar`.
+修改产品打包配置后运行：
 
-To simplify local development, you can remove the version number from the build product. This allows
-the file name to stay consistent across versions. To do so, add the following to
-`~/.gradle/gradle.properties`.
-
-```properties
-removeJarVersionNumbers=true
+```bash
+node --test beacon/scripts/agent-packaging.test.cjs
 ```
 
-## Working with fork repositories
+该测试用仓库 Gradle Wrapper 在临时最小工程中执行实际打包配置，验证产品版本、文件名、Manifest 和错误拒绝；首次运行可能需要下载 Gradle。它不构建完整 Agent，不能代替 `:javaagent:assemble`。
 
-If you forked this repository, some GitHub Actions workflows may fail due to missing secrets or permissions. To avoid unnecessary workflow failure notifications:
+## 上线与发行
 
-### Disabling GitHub Actions in your fork
-
-**Option 1: Disable all workflows** - Go to Settings > Actions > General, select "Disable actions", and save
-
-**Option 2: Disable specific workflows** - Go to Actions tab, click a workflow, click "..." menu, and select "Disable workflow"
-
-Either option still allows you to contribute via pull requests to the main repository.
-
-## IntelliJ setup and troubleshooting
-
-See [IntelliJ setup and troubleshooting](docs/contributing/intellij-setup-and-troubleshooting.md)
-
-## Style guide
-
-See [Style guide](docs/contributing/style-guide.md)
-
-## Running the tests
-
-See [Running the tests](docs/contributing/running-tests.md)
-
-## Writing instrumentation
-
-See [Writing instrumentation](docs/contributing/writing-instrumentation.md)
-
-## Understanding the javaagent structure
-
-See [Understanding the javaagent structure](docs/contributing/javaagent-structure.md)
-
-## Understanding the javaagent instrumentation testing components
-
-See [Understanding the javaagent instrumentation testing components](docs/contributing/javaagent-test-infra.md)
-
-## Debugging
-
-See [Debugging](docs/contributing/debugging.md)
-
-## Understanding Muzzle
-
-See [Understanding Muzzle](docs/contributing/muzzle.md)
-
-## Troubleshooting PR build failures
-
-The build logs are very long and there is a lot of parallelization, so the logs can be hard to
-decipher, but if you expand the "Build scan" step, you should see something like:
-
-```text
-Run cat build-scan.txt
-https://gradle.com/s/ila4qwp5lcf5s
-```
-
-Opening the build scan link can sometimes take several seconds (it's a large build), but it
-typically makes it a lot clearer what's failing. Sometimes there will be several build scans in a
-log, so look for one that follows the "BUILD FAILED" message.
-
-You can also try the "Explain error" button at the top of the GitHub Actions page,
-which often does a reasonable job of parsing the long build log and displaying the important part.
-
-### Draft PRs
-
-Draft PRs are welcome, especially when exploring new ideas or experimenting with a hypothesis.
-However, draft PRs may not receive the same degree of attention, feedback, or scrutiny unless
-requested directly. In order to help keep the PR backlog maintainable, drafts older than 6 months
-will be closed by the project maintainers. This should not be interpreted as a rejection. Closed
-PRs may be reopened by the author when time or interest allows.
+首次 GitHub 上线前完成 [CI 检查](beacon/CI.md)，正式发行按[发行流程](beacon/RELEASING.md)执行。维护者名单与远程分支保护需由仓库管理员确认，不沿用上游组织的 CODEOWNERS。

@@ -23,6 +23,29 @@ permissions:
   contents: read
 
 jobs:
+  beacon-maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Check upstream tag maintenance tool
+        run: |
+          bash -n beacon/scripts/fetch-upstream-tag.sh
+          node --test beacon/scripts/fetch-upstream-tag.test.cjs
+      - name: Set up JDK for packaging tests
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+      - name: Setup Gradle for packaging tests
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+        with:
+          cache-read-only: true
+      - name: Check Beacon product packaging
+        run: node --test beacon/scripts/agent-packaging.test.cjs
+
   spotless:
     runs-on: ubuntu-latest
     steps:
@@ -255,9 +278,9 @@ jobs:
       - name: Upload agent jar
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: opentelemetry-javaagent.jar
-          path: javaagent/build/libs/opentelemetry-javaagent-*-SNAPSHOT.jar
-          if-no-files-found: ignore
+          name: beacon-javaagent
+          path: javaagent/build/libs/beacon-javaagent-*.jar
+          if-no-files-found: error
 
       - name: Collect SBOMs
         run: |

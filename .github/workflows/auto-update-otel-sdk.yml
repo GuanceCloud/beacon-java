@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   check-versions:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-latest
     outputs:
       current-version: ${{ steps.check-versions.outputs.current-version }}
@@ -49,9 +50,7 @@ jobs:
     permissions:
       contents: write  # for git push to PR branch
     runs-on: ubuntu-latest
-    if: |
-      needs.check-versions.outputs.current-version != needs.check-versions.outputs.latest-version &&
-      needs.check-versions.outputs.already-opened != 'true'
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (needs.check-versions.outputs.current-version != needs.check-versions.outputs.latest-version && needs.check-versions.outputs.already-opened != 'true') }}
     needs:
       - check-versions
     steps:
@@ -118,7 +117,7 @@ jobs:
     needs:
       - check-versions
       - update-otel-sdk
-    if: always()
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always()) }}
     uses: open-telemetry/shared-workflows/.github/workflows/workflow-failure-issue.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
     with:
       success: >-

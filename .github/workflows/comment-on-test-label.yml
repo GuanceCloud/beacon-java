@@ -20,9 +20,7 @@ permissions:
 
 jobs:
   comment:
-    if: |
-      github.event.label.name == 'test openj9' ||
-      github.event.label.name == 'test windows'
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (github.event.label.name == 'test openj9' || github.event.label.name == 'test windows') }}
     runs-on: ubuntu-latest
     steps:
       - name: Post explanatory comment

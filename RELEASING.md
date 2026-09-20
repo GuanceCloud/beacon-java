@@ -1,5 +1,8 @@
 # Versioning and releasing
 
+> 本文保留 OpenTelemetry 上游发行流程，仅供同步参考，不是 Beacon 的发布入口。
+> Beacon 的产品版本、制品构建及发布操作统一见 [Beacon Java 发行流程](beacon/RELEASING.md)。
+
 OpenTelemetry Auto-Instrumentation for Java uses [SemVer standard](https://semver.org) for versioning of its artifacts.
 
 The version is specified in [version.gradle.kts](version.gradle.kts).

@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   publishLinux:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: read
       packages: write
@@ -47,6 +48,7 @@ jobs:
         run: ./gradlew :smoke-tests:images:fake-backend:jib -Djib.httpTimeout=120000 -Djib.console=plain -PextraTag=${{ env.TAG }}
 
   publishWindows:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: read
       packages: write
@@ -88,7 +90,7 @@ jobs:
     needs:
       - publishLinux
       - publishWindows
-    if: always()
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always()) }}
     uses: open-telemetry/shared-workflows/.github/workflows/workflow-failure-issue.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
     with:
       success: >-

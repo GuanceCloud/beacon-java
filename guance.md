@@ -1,5 +1,9 @@
 # 二次开发
 
+> 历史归档：本文仅保留旧 Guance 仓库的开发记录，不适用于 Beacon Java。
+> Beacon 使用 `main`、独立产品版本和 `beacon-vX.Y.Z` 标签；请按[贡献指南](CONTRIBUTING.md)、[上游同步](beacon/UPSTREAM.md)和[发行流程](beacon/RELEASING.md)操作，不执行本文旧的分支和推送命令。
+> 下文旧版本的“SQL 脱敏”表述不代表当前行为；当前配置含义见 [JDBC 配置](instrumentation/jdbc/README.md)。
+
 
 ## 分支和版本
 

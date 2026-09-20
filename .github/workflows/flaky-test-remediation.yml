@@ -65,7 +65,7 @@ jobs:
 
   fix:
     needs: analyze
-    if: needs.analyze.outputs.has_candidate == 'true'
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (needs.analyze.outputs.has_candidate == 'true') }}
     runs-on: ubuntu-latest
     environment: protected
     permissions:

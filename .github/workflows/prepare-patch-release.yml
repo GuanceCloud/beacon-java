@@ -7,6 +7,7 @@ permissions:
 
 jobs:
   prepare-patch-release:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: write  # for git push to PR branch
     runs-on: ubuntu-latest

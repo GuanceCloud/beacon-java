@@ -1,36 +1,45 @@
 # Beacon Java 发行流程
 
-状态：流程规范已建立，Beacon 专用构建身份、打包与发布自动化尚未实现。继承的上游/Guance 发布工作流仍保留在源码中，首次远程推送前必须审计并禁用不适用流程。
+Beacon 使用独立产品版本和制品身份，[打包配置](agent.gradle.kts)由 `:javaagent` 加载。继承的官方及旧 Guance 发布任务已通过仓库条件限制，不能作为 Beacon 发行入口；具体见 [CI 说明](CI.md)。当前采用下述受控构建与人工发布流程，不依赖尚未配置的自动发布任务。
 
-## 版本规则
+## 版本与范围
 
-- Beacon Java 独立采用语义版本，发布标签为 `beacon-vX.Y.Z`，不复用旧 `v*` 标签。
-- 官方基线和下游构建版本单独记录；不要把源码所有版本字符串全局改为产品版本。
-- 构建制品应包含或随附产品版本、产品源码提交、官方基线、依赖清单及外部组件版本。
-- 现有构建产物名称和运行时身份未改成 Beacon；仅重命名 JAR 不能代替发行集成。
+- Beacon Java 使用独立语义版本和 `beacon-vX.Y.Z` 标签，不复用旧 `v*` 标签。
+- [version.properties](version.properties) 是产品版本的唯一配置源。当前 `0.1.0-SNAPSHOT` 是开发版本；正式版使用 `X.Y.Z`，公开候选版使用 `X.Y.Z-rc.N`。不发布 SNAPSHOT 为正式 Release，不通过临时命令行覆盖发行版本。
+- 产品版本与[上游基线](upstream.lock.json)分别记录，不全局替换上游构建版本，也不修改应用的 `service.version`。
+- 完整安装包为 `beacon-javaagent-<Beacon版本>.jar`；`base`、`dontuse` 等辅助产物不作为 Beacon 安装包发布。不使用继承的 Maven/Sonatype 发布任务发布 Beacon 产品。
+- Manifest 的 `Implementation-Title` / `Implementation-Version` / `Implementation-Vendor` 标识 Beacon 产品；`Beacon-Upstream-Tag` / `Beacon-Upstream-Commit` 标识官方基线；`Beacon-Instrumentation-Version` 保留当前继承的模块构建版本。内嵌 `META-INF/beacon/` 保存版本与来源文件。
+- 上游模块坐标、Java 包名和 instrumentation scope 不批量重命名。完整 JAR 的 `java -jar` 版本输出及 AgentVersion 从 Manifest 读取，因此使用 Beacon 产品版本；模块构建版本另读 `Beacon-Instrumentation-Version`。现有启动日志前缀及默认 `telemetry.distro.name` 仍由继承的运行时代码提供，不将文件命名调整描述成所有运行时标识均已品牌化。
+- 每版明确实际验证的功能和支持范围。现有 Profiling 为继承的实验性实现；Extension 化单独实施，不作为首次提交源码的前置条件。
+- 来源、许可证、必要第三方声明、制品摘要和已知限制随发行提供。签名、制品托管及 SBOM 生成方式在发布实现中确定。
 
-## 待完成的首次准备
+## 发布顺序
 
-1. 审计旧 `guance-v2` 自有增强，确定需要保留的功能与支持范围。
-2. 选择首发官方基线，完成源码同步与依赖兼容验证。
-3. 实现独立的 Beacon 版本注入、制品命名、构建元信息与必要配置；保持上游 API/包名兼容。
-4. 单独集成和验证 SecurityContext、Profiling 等组件，不能将规划视为已支持。
-5. 建立仅服务 `beacon` 和 `beacon-v*` 的测试/发布工作流，使用最小权限和人工审批环境。审计继承流程的 secrets、写权限、目标仓库、分支与标签触发条件。
-6. 明确制品托管、签名、SBOM、SHA-256、保留策略与回退方式。
+1. 在发行 PR 中更新 `version.properties`，将 [Changelog](CHANGELOG.md) 的已完成条目归入对应版本，明确配置变化、发布范围与说明；合并后固定最终源码提交。上游 Changelog 不混入 Beacon 条目。
+2. 从该提交、固定依赖和构建环境生成候选制品，记录 SHA-256 与构建来源。
+3. 对该候选制品完成适用的模块、运行环境、自有增强、接收端、性能及回退验证。测试证据绑定到同一提交及制品摘要。
+4. 审批后在已验证提交创建不可变的发行标签，发布已经验证的同一份制品；不在这一步修改依赖或重新构建替代品。
+5. 如产品版本、Manifest 或任意制品内容变化，重新构建并验证。公开 RC 与正式版内容不同，不能直接重命名当作同一制品。
+6. 将用户文档和支持范围关联到该版本。首次发行或入口、支持状态变化时更新 [Beacon 产品入口](https://github.com/GuanceCloud/beacon)，不要求每个补丁版本跨仓登记。
 
-## 每次发行门禁
+本流程尚未绑定具体 GitHub Environment 或审批人；管理员确认后配置，不能仅凭文档认为审批已经生效。
 
-1. 固定源码提交及 `upstream.lock.json`，在干净环境使用仓库 Gradle Wrapper 和规定的 JDK 构建。
-2. 通过单元测试、muzzle/框架矩阵、Agent 烟测、自有增强回归、性能/资源预算、DataKit 联调与灰度。
-3. 核对支持矩阵、配置变化、已知限制、许可证和第三方声明，更新发布说明。
-4. 验收通过并获准发布后创建新的不可变 `beacon-vX.Y.Z` 标签，构建一次并晋级同一份制品；不要覆盖已发布标签和制品。
-5. 发布 JAR、校验文件、SBOM、构建来源和发布说明，并在产品仓库登记实际组件版本。
-6. 回退安装到前一个固定版本和相应配置，不移动旧标签指向。
+## 候选制品构建
 
-当前源码的构建入口参考根目录 [CONTRIBUTING.md](../CONTRIBUTING.md)，要求 JDK 21：
+在干净的发行提交、JDK 21 环境下，从仓库根目录执行：
 
 ```bash
-./gradlew assemble
+./gradlew :javaagent:assemble :javaagent:verifyBeaconAgent
 ```
 
-现有 Agent 输出位于 `javaagent/build/libs/`。本次没有运行该构建；组装成功本身也不能替代完整运行验收。
+输出位于 `javaagent/build/libs/`，按已提交的产品版本选取唯一的完整 Agent；不要用包含旧产物的通配符发布。`verifyBeaconAgent` 检查文件名、Manifest 和来源文件，不代替功能、兼容性或性能测试。SHA-256、源码提交及验证结果随候选制品保存。
+
+审批后只推送该版本的 `beacon-vX.Y.Z` 标签，并在同名 Release 上传已经验证的同一 JAR、SHA-256 和必要声明；不要使用 `git push --tags`，不要重新构建后替换候选制品。下一开发版本在另一个提交中设置，不能混进当前发行标签。
+
+## 回退与重试
+
+同版本重试只允许发布相同内容。标签或制品与预期不一致时停止，不覆盖已有资产。问题版本保留追溯记录，回退到上一固定制品及对应配置。
+
+## 构建和首次上线
+
+构建入口见[贡献指南](../CONTRIBUTING.md)，首次 GitHub 上线与待确认项目见 [CI 检查](CI.md)。普通 assemble 成功不代表完成发行验收。

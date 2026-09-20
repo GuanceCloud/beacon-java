@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   prepare:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.set-tag.outputs.TAG }}
@@ -23,6 +24,7 @@ jobs:
         run: echo "TAG=$(date '+%Y%m%d').$GITHUB_RUN_ID" >> $GITHUB_OUTPUT
 
   publish:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: read
       packages: write
@@ -76,7 +78,7 @@ jobs:
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
         with:
           # only push cache for one matrix option per OS since github action cache space is limited
-          cache-read-only: ${{ matrix.smoke-test-suite != 'tomcat' }}
+          cache-read-only: ${{ matrix.smoke-test-server != 'tomcat' }}
 
       - name: Build Linux docker images
         if: matrix.os != 'windows-latest'
@@ -92,7 +94,7 @@ jobs:
       issues: write
     needs:
       - publish
-    if: always()
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always()) }}
     uses: ./.github/workflows/reusable-workflow-notification.yml
     with:
       success: ${{ needs.publish.result == 'success' }}

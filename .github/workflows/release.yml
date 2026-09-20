@@ -7,6 +7,7 @@ permissions:
 
 jobs:
   common:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     uses: ./.github/workflows/build-common.yml
 
   # test-latest-deps is intentionally not included in the release workflows
@@ -19,6 +20,7 @@ jobs:
   # and this is not a reason to hold up the release
 
   release:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     environment: protected
     permissions:
       contents: write # for creating the release
@@ -185,6 +187,7 @@ jobs:
           echo "prior-version=$PRIOR_VERSION" >> $GITHUB_OUTPUT
 
   documentation-audit:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: read
       issues: write
@@ -193,6 +196,7 @@ jobs:
     uses: ./.github/workflows/documentation-synchronization-audit.yml
 
   post-release-updates:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: write # for git push to PR branch
     runs-on: ubuntu-latest

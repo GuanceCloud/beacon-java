@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   analyze:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     environment: protected
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +47,7 @@ jobs:
       issues: write
     needs:
       - analyze
-    if: always()
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always()) }}
     uses: open-telemetry/shared-workflows/.github/workflows/workflow-failure-issue.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
     with:
       success: ${{ needs.analyze.result == 'success' }}

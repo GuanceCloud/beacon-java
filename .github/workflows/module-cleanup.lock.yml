@@ -104,6 +104,7 @@ run-name: "Module Cleanup"
 
 jobs:
   activation:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-slim
     permissions:
       actions: read
@@ -341,7 +342,7 @@ jobs:
     needs:
       - activation
       - dispatch
-    if: needs.dispatch.outputs.has_work == 'true'
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (needs.dispatch.outputs.has_work == 'true') }}
     runs-on: ubuntu-latest
     environment: protected
     permissions:
@@ -940,9 +941,7 @@ jobs:
       - finalize
       - safe_outputs
       - suppress_default_create_issue
-    if: >
-      always() && (needs.agent.result != 'skipped' || needs.activation.outputs.lockdown_check_failed == 'true' ||
-      needs.activation.outputs.stale_lock_file_failed == 'true')
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always() && (needs.agent.result != 'skipped' || needs.activation.outputs.lockdown_check_failed == 'true' || needs.activation.outputs.stale_lock_file_failed == 'true')) }}
     runs-on: ubuntu-slim
     environment: protected
     permissions: {}
@@ -1108,7 +1107,7 @@ jobs:
     needs:
       - agent
       - dispatch
-    if: always() && needs.dispatch.outputs.has_work == 'true'
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always() && needs.dispatch.outputs.has_work == 'true') }}
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -1163,7 +1162,7 @@ jobs:
     needs:
       - activation
       - agent
-    if: (!cancelled()) && needs.agent.result != 'skipped'
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && ((!cancelled()) && needs.agent.result != 'skipped') }}
     runs-on: ubuntu-slim
     environment: protected
     permissions: {}
@@ -1248,8 +1247,7 @@ jobs:
 
   suppress_default_create_issue:
     needs: agent
-    if: >
-      (!cancelled()) && needs.agent.result != 'skipped' && contains(needs.agent.outputs.output_types, 'suppress_default_create_issue')
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && ((!cancelled()) && needs.agent.result != 'skipped' && contains(needs.agent.outputs.output_types, 'suppress_default_create_issue')) }}
     runs-on: ubuntu-latest
     environment: protected
     steps:
@@ -1267,4 +1265,3 @@ jobs:
       - run: "true"
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-safe-job-env.outputs.GH_AW_AGENT_OUTPUT }}
-

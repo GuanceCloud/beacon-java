@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   run-overhead-tests:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     permissions:
       contents: write # for git push to gh-pages branch
     runs-on: ubuntu-latest
@@ -68,7 +69,7 @@ jobs:
       issues: write
     needs:
       - run-overhead-tests
-    if: always()
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' && (always()) }}
     uses: open-telemetry/shared-workflows/.github/workflows/workflow-failure-issue.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
     with:
       success: ${{ needs.run-overhead-tests.result == 'success' }}

@@ -28,6 +28,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

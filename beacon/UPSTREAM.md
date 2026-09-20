@@ -1,57 +1,82 @@
 # 同步 OpenTelemetry
 
-## Remote 和标签
+所有命令均从仓库根目录执行。开发分支为 `main`；[基线文件](upstream.lock.json)中的导入记录保持不变，上游记录只在实际合入目标版本后更新。
 
-当前本地已配置：
+## 首次配置
 
-- `origin`：预配置的 Beacon Java 目标仓库，尚未推送。
-- `legacy`：旧 GuanceCloud 仓库，只作为历史来源。
-- `upstream`：官方源码仓库；官方分支抓取至 `upstream/*`，标签抓取至 `refs/upstream-tags/*`。
+从 Beacon 仓库完整克隆后，`origin` 应指向 `https://github.com/GuanceCloud/beacon-java.git`。先用 `git remote -v` 核对。不存在 `upstream` 时再添加：
 
-`git fetch upstream` 已禁用自动混入普通标签；独立标签 refspec 不使用强制更新，官方标签发生改写时应停止并审查。
+```bash
+git remote add upstream https://github.com/open-telemetry/opentelemetry-java-instrumentation.git
+```
 
-Git remote/refspec 属于本地配置，不会随提交传给新克隆。未来从 Beacon 仓库全量克隆后，需要执行一次：
+若已存在，先核对地址，不要重复添加或未经检查覆盖。确认后配置：
+
+```bash
+git config remote.upstream.tagOpt --no-tags
+git config --replace-all remote.upstream.fetch '+refs/heads/main:refs/remotes/upstream/main'
+git config remote.pushDefault origin
+```
+
+此配置替换旧的自动标签抓取规则，仅抓取官方主线。自定义上游标签必须通过下文的校验脚本获取。`git fetch upstream` 不会更新已采用的标签引用。
+
+如需查询旧 GuanceCloud 分支，可在未配置 `legacy` 时添加并抓取：
 
 ```bash
 git remote add legacy https://github.com/GuanceCloud/opentelemetry-java-instrumentation.git
-git remote add upstream https://github.com/open-telemetry/opentelemetry-java-instrumentation.git
-git config remote.upstream.tagOpt --no-tags
-git config --add remote.upstream.fetch 'refs/tags/*:refs/upstream-tags/*'
-git config remote.pushDefault origin
-git fetch --no-tags upstream
+git fetch --no-tags legacy
 ```
 
-本地初始化已完成以上设置，不要重复添加。先用 `git remote -v` 和 `git config --get-all remote.upstream.fetch` 核对。
+Remote、refspec 和抓取产生的远程跟踪引用属于本地配置，不随提交传递；CI 也必须显式配置。不要把所有历史分支或标签直接推送成 Beacon 的发布入口。
 
-## 每次同步
+## 获取并校验正式标签
 
-以下是待执行流程，不是本次初始化已执行的升级：
-
-1. 确保工作区干净，切回 `beacon`，先正常更新已配置的产品远程跟踪分支。
-2. `git fetch --no-tags upstream` 抓取官方版本；阅读目标正式版本的 Release Notes，评估 SDK、语义约定及配置变化。
-3. 从 `beacon` 新建 `sync/otel-vX.Y.Z` 分支，将 `refs/upstream-tags/vX.Y.Z` 解析为完整提交并固定下来。
-4. 使用普通 merge 合入，保留共同历史，不使用 squash、目录覆盖或 unrelated histories。
+选定官方 Release 后，审查发布内容并固定该标签对应的完整提交 SHA。不能在同一条自动命令中抓到什么 SHA 就无条件信任什么 SHA。
 
 ```bash
-# 示例变量：先替换成经评审选定的真实官方标签；不要原样执行占位值。
-OTEL_TARGET_TAG='vX.Y.Z'
-git switch beacon
-git switch -c "sync/otel-${OTEL_TARGET_TAG}"
-OTEL_TARGET_COMMIT=$(git rev-parse --verify "refs/upstream-tags/${OTEL_TARGET_TAG}^{commit}")
-git merge --no-ff --no-commit "$OTEL_TARGET_COMMIT"
+# 仅示范如何核对当前已登记基线；升级时换成评审确定的标签与提交。
+bash beacon/scripts/fetch-upstream-tag.sh \
+  v2.30.0 080c1d32ca676ba7b0210c21b60cce8e7ac39058
 ```
 
-5. 逐项解决冲突，不全局采用 ours/theirs。更新差异登记、`upstream.lock.json` 和测试。无法完成时可在确认没有需保留的冲突解决工作后 `git merge --abort`。
-6. 合并提交前验证目标提交已在合并父链中；提交完成后执行 `git merge-base --is-ancestor "$OTEL_TARGET_COMMIT" HEAD`，要求退出码为 0。
-7. 构建、改动模块单测、muzzle/版本矩阵、Agent 烟测、自有增强回归和数据兼容验收通过后，提交同步 PR。
-8. 将同步分支以保留提交历史的方式合入 `beacon`，不要 squash 整个上游同步 PR。普通自有功能 PR 可以另行采用团队约定。
+[抓取脚本](scripts/fetch-upstream-tag.sh)将单个标签抓入临时引用，检查它确实指向指定提交；若同名本地上游引用已存在，还会比较完整标签对象，拒绝改写。只有全部通过，才更新 `refs/upstream-tags/<tag>`。脚本不会合并代码、修改基线文件或创建正式发行标签。
 
-## 版本边界
+Git 对 `refs/upstream-tags/*` 不提供与 `refs/tags/*` 相同的拒绝改写规则，因此不能仅依赖 refspec 不带 `+`。此脚本校验对象一致性，不替代可信来源审查或签名验证。[Git fetch 规则](https://git-scm.com/docs/git-fetch)
 
-保持 Gradle 的 SDK/BOM/Instrumentation 依赖组合与选定上游的构建约束一致；不能将每个依赖分别自动升到 latest 就认为兼容。先完成源码同步，再处理安全补丁和额外依赖升级。
+## 合入已核对的目标
 
-`upstream.lock.json` 记录已整合且经过说明的固定来源，而不是网上最新版本号。当前 `v2.30.0` 仅证明其提交是导入提交的祖先，不证明当前下游与官方输出完全相同。
+1. 确认工作区干净，更新产品主线；首次推送后才会有 `origin/main`。
+2. 完成上述标签抓取校验，在同步分支合并固定提交。
+3. 解决冲突、补齐适配，更新基线文件的上游标签与提交，在 [Beacon Changelog](CHANGELOG.md) 的 `Unreleased` 记录升级及用户影响；不另建差异台账。
+4. 运行受影响模块、Muzzle、Agent 烟测和自有增强回归；按发布范围验证数据与运行环境兼容性。
+5. 提交合并后验证祖先关系，创建目标为 `main` 的 PR。
 
-## 同步策略
+以下为操作模板，占位值必须先替换，目标 SHA 应来自已完成评审的记录：
 
-后续可增加定时检测正式 Release、自动建同步分支/PR 的流程；目前未启用。产品发行必须人工审批，不能在检测到版本后直接推送生产制品。
+```bash
+git switch main
+git fetch --no-tags origin
+git merge --ff-only origin/main
+
+OTEL_TARGET_TAG='vX.Y.Z'
+OTEL_TARGET_COMMIT='<完整的已核对提交SHA>'
+bash beacon/scripts/fetch-upstream-tag.sh "$OTEL_TARGET_TAG" "$OTEL_TARGET_COMMIT" &&
+  git switch -c "sync/otel-${OTEL_TARGET_TAG}" &&
+  git merge --no-ff --no-commit "$OTEL_TARGET_COMMIT"
+```
+
+`--no-commit` 阶段尚未创建合并提交，不能用当前 HEAD 已包含目标祖先作为判断。完成冲突处理、测试并提交后，再运行：
+
+```bash
+git merge-base --is-ancestor "$OTEL_TARGET_COMMIT" HEAD
+```
+
+退出码必须为 0。若目标早已是祖先，不需要重复升级。同步 PR 合入产品主线时保留上游历史，不 squash 整次同步；无法继续时，确认没有需要保留的冲突解决工作再使用 `git merge --abort`。
+
+## 依赖与发行边界
+
+优先使用目标上游配套的 SDK、BOM 和构建约束，不将每个依赖分别升级到 latest 后视为兼容。安全补丁单独评估和验证。
+
+已抓取、已合并、已测试和已发行是不同状态。基线文件记录源码来源，测试证据归对应提交的 PR/CI，发行结果归固定版本的 Release。
+
+同步不自动修改 [Beacon 产品版本](version.properties)，也不把上游版本号当作 Beacon 发行号。保留根目录上游 Changelog；合并时核对 `javaagent/build.gradle.kts` 对 [Beacon 打包配置](agent.gradle.kts)的加载以及 CI 的 Beacon 制品上传路径。

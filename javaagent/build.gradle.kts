@@ -442,6 +442,9 @@ fun ShadowJar.excludeBootstrapClasses() {
   exclude("io/opentelemetry/javaagent/bootstrap/**")
 }
 
+// Keep Beacon product packaging separate from upstream module/dependency versions.
+apply(from = rootProject.file("beacon/agent.gradle.kts"))
+
 class JavaagentProvider(
   @Input
   val agentJarPath: Provider<String>,
