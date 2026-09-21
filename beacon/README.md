@@ -38,7 +38,8 @@
 | 实验性 JFR Profiling 与 DataKit 导出 | [profiling](../instrumentation/profiling/) |
 | Spring AI 模型调用 | [spring-ai-1.0](../instrumentation/spring/spring-ai-1.0/) |
 | Spring AI Alibaba Agent 与工具调用 | [spring-ai-alibaba-agent-1.0](../instrumentation/spring/spring-ai-alibaba-agent-1.0/) |
-| Taobao HSF RPC | [taobao-hsf](../instrumentation/taobao-hsf/) |
+
+HSF 插桩已暂时移除：其 SDK 依赖仅存在于开发机本地，尚无供 CI 使用的制品来源。当前 Agent 不提供 HSF 自动插桩；历史实现保留在 Git 历史中，恢复前需先解决依赖来源并完成构建与兼容性验证。
 
 ## Profiling 的扩展边界
 
