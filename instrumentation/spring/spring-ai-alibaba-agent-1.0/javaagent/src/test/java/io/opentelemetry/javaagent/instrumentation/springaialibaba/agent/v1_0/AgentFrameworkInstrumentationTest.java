@@ -60,18 +60,14 @@ class AgentFrameworkInstrumentationTest {
             trace.hasSpansSatisfyingExactly(
                 span -> span.hasName("parent").hasKind(INTERNAL).hasNoParent(),
                 span ->
-                    span
-                        .hasName("stream_agent test-agent")
+                    span.hasName("stream_agent test-agent")
                         .hasKind(INTERNAL)
                         .hasParent(trace.getSpan(0))
                         .hasAttributesSatisfyingExactly(
                             equalTo(stringKey("gen_ai.agent.name"), "test-agent"),
                             equalTo(stringKey("gen_ai.operation.name"), "invoke_agent")),
                 span ->
-                    span
-                        .hasName("chat test-model")
-                        .hasKind(CLIENT)
-                        .hasParent(trace.getSpan(1))));
+                    span.hasName("chat test-model").hasKind(CLIENT).hasParent(trace.getSpan(1))));
   }
 
   @Test
@@ -85,33 +81,29 @@ class AgentFrameworkInstrumentationTest {
             trace.hasSpansSatisfyingExactly(
                 span -> span.hasName("parent").hasKind(INTERNAL).hasNoParent(),
                 span ->
-                    span
-                        .hasName("invoke_agent test-agent")
+                    span.hasName("invoke_agent test-agent")
                         .hasKind(INTERNAL)
                         .hasParent(trace.getSpan(0))
                         .hasAttributesSatisfyingExactly(
                             equalTo(stringKey("gen_ai.agent.name"), "test-agent"),
                             equalTo(stringKey("gen_ai.operation.name"), "invoke_agent")),
                 span ->
-                    span
-                        .hasName("chat test-model")
-                        .hasKind(CLIENT)
-                        .hasParent(trace.getSpan(1))));
+                    span.hasName("chat test-model").hasKind(CLIENT).hasParent(trace.getSpan(1))));
   }
 
   @Test
   void toolCallCreatesSpan() throws Exception {
     AgentToolNode toolNode = toolNode(new TestTool("weather", false));
 
-    testing.runWithSpan("parent", () -> toolNode.apply(state("weather"), RunnableConfig.builder().build()));
+    testing.runWithSpan(
+        "parent", () -> toolNode.apply(state("weather"), RunnableConfig.builder().build()));
 
     testing.waitAndAssertTraces(
         trace ->
             trace.hasSpansSatisfyingExactly(
                 span -> span.hasName("parent").hasKind(INTERNAL).hasNoParent(),
                 span ->
-                    span
-                        .hasName("execute_tool weather")
+                    span.hasName("execute_tool weather")
                         .hasKind(INTERNAL)
                         .hasParent(trace.getSpan(0))
                         .hasAttributesSatisfyingExactly(
@@ -120,8 +112,7 @@ class AgentFrameworkInstrumentationTest {
                             equalTo(stringKey("gen_ai.tool.name"), "weather"),
                             equalTo(stringKey("gen_ai.tool.call.id"), "tool-call-id"),
                             equalTo(stringKey("gen_ai.tool.call.arguments"), "{}"),
-                            equalTo(
-                                booleanKey("spring_ai_alibaba.tool.parallel_execution"), false),
+                            equalTo(booleanKey("spring_ai_alibaba.tool.parallel_execution"), false),
                             equalTo(stringKey("gen_ai.tool.call.result"), "weather is sunny"))));
   }
 
@@ -129,15 +120,15 @@ class AgentFrameworkInstrumentationTest {
   void failedToolCallMarksSpanAsError() throws Exception {
     AgentToolNode toolNode = toolNode(new TestTool("weather", true));
 
-    testing.runWithSpan("parent", () -> toolNode.apply(state("weather"), RunnableConfig.builder().build()));
+    testing.runWithSpan(
+        "parent", () -> toolNode.apply(state("weather"), RunnableConfig.builder().build()));
 
     testing.waitAndAssertTraces(
         trace ->
             trace.hasSpansSatisfyingExactly(
                 span -> span.hasName("parent").hasKind(INTERNAL).hasNoParent(),
                 span ->
-                    span
-                        .hasName("execute_tool weather")
+                    span.hasName("execute_tool weather")
                         .hasKind(INTERNAL)
                         .hasParent(trace.getSpan(0))
                         .hasStatus(StatusData.error())

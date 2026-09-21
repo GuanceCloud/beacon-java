@@ -23,7 +23,8 @@ import javax.annotation.Nullable;
 public final class SpringAiAlibabaAgentSingletons {
   private static final String INSTRUMENTATION_NAME = "io.opentelemetry.spring-ai-alibaba-agent-1.0";
 
-  private static final Instrumenter<AgentRequest, Void> AGENT_INSTRUMENTER = createAgentInstrumenter();
+  private static final Instrumenter<AgentRequest, Void> AGENT_INSTRUMENTER =
+      createAgentInstrumenter();
   private static final Instrumenter<ToolRequest, ToolCallResponse> TOOL_INSTRUMENTER =
       createToolInstrumenter();
 
@@ -45,23 +46,26 @@ public final class SpringAiAlibabaAgentSingletons {
   private static Instrumenter<ToolRequest, ToolCallResponse> createToolInstrumenter() {
     InstrumenterBuilder<ToolRequest, ToolCallResponse> builder =
         Instrumenter.<ToolRequest, ToolCallResponse>builder(
-                GlobalOpenTelemetry.get(), INSTRUMENTATION_NAME, SpringAiAlibabaAgentSpanNames::tool)
+                GlobalOpenTelemetry.get(),
+                INSTRUMENTATION_NAME,
+                SpringAiAlibabaAgentSpanNames::tool)
             .addAttributesExtractor(new ToolAttributesExtractor())
             .setSpanStatusExtractor(
                 (spanStatusBuilder, request, response, error) -> {
                   if (response != null && response.isError()) {
                     spanStatusBuilder.setStatus(StatusCode.ERROR);
                   } else {
-                    SpanStatusExtractor.getDefault().extract(spanStatusBuilder, request, response, error);
+                    SpanStatusExtractor.getDefault()
+                        .extract(spanStatusBuilder, request, response, error);
                   }
                 });
     return builder.buildInstrumenter(SpanKindExtractor.alwaysInternal());
   }
 
-  private static final class AgentAttributesExtractor implements AttributesExtractor<AgentRequest, Void> {
+  private static final class AgentAttributesExtractor
+      implements AttributesExtractor<AgentRequest, Void> {
     @Override
-    public void onStart(
-        AttributesBuilder attributes, Context parentContext, AgentRequest request) {
+    public void onStart(AttributesBuilder attributes, Context parentContext, AgentRequest request) {
       attributes.put(stringKey("gen_ai.agent.name"), request.getAgentName());
       attributes.put(stringKey("gen_ai.operation.name"), "invoke_agent");
     }

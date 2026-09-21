@@ -19,6 +19,7 @@ import static io.opentelemetry.semconv.incubating.GenAiIncubatingAttributes.GEN_
 import static io.opentelemetry.semconv.incubating.GenAiIncubatingAttributes.GEN_AI_USAGE_INPUT_TOKENS;
 import static io.opentelemetry.semconv.incubating.GenAiIncubatingAttributes.GEN_AI_USAGE_OUTPUT_TOKENS;
 import static io.opentelemetry.semconv.incubating.GenAiIncubatingAttributes.GenAiOperationNameIncubatingValues.CHAT;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,7 +29,6 @@ import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.instrumentation.testing.junit.AgentInstrumentationExtension;
 import io.opentelemetry.instrumentation.testing.junit.InstrumentationExtension;
 import io.opentelemetry.javaagent.instrumentation.springai.v1_0.app.TestChatModel;
-import java.util.Arrays;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -165,7 +165,7 @@ class ChatModelTest {
     DefaultChatOptions options = new DefaultChatOptions();
     options.setModel(MODEL);
     return new Prompt(
-        Arrays.asList(
+        asList(
             new SystemMessage("You are a helpful tracing assistant."),
             new UserMessage("Tell me about traces")),
         options);

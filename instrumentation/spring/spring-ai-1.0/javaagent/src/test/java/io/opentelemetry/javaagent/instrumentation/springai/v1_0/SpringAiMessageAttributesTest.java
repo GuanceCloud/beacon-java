@@ -33,7 +33,8 @@ class SpringAiMessageAttributesTest {
         .isEqualTo("[{\"type\":\"text\",\"content\":\"line\\nvalue\"}]");
     assertThat(systemInstructions.truncated()).isFalse();
     assertThat(messages.json())
-        .isEqualTo("[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"123456789\"}]}]");
+        .isEqualTo(
+            "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"123456789\"}]}]");
     assertThat(messages.truncated()).isTrue();
   }
 
