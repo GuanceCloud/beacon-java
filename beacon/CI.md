@@ -2,20 +2,41 @@
 
 ## 分支与检查入口
 
-产品开发主线使用 `main`，代码延续导入的 GuanceCloud 增强，不切换到旧仓库的同名分支。
+产品开发主线使用 `main`。[Beacon CI](../.github/workflows/beacon-ci.yml) 是本仓库的 PR、主线 push 和手动验证入口；只在 `GuanceCloud/beacon-java` 运行，PR 目标为 `main` 或 `release/*`。
 
-- [主线构建](../.github/workflows/build.yml)：监听 `main` 和维护分支的 push，复用现有构建、测试、Muzzle 和 lint。
-- [PR 构建](../.github/workflows/build-pull-request.yml)：复用已有 PR 检查；合入目标为 `main`。
-- [公共构建](../.github/workflows/build-common.yml)：运行标签抓取工具的本地 Git 测试和最小 Gradle 工程的打包回归；现有 Gradle `check` 同时校验 Beacon 完整 Agent 的命名和 Manifest，并上传 `beacon-javaagent-*.jar` 开发制品。CI artifact 不等于正式 Release。
-- Wrapper、元数据检查、PR 测试镜像构建、依赖审查、CodeQL 和工作流静态检查保留；其中部分检查需要相应 GitHub 功能和权限。
+| 场景 | 模块测试矩阵 | 附加检查 |
+| --- | --- | --- |
+| 普通 PR | JDK 21 × 4 分片 × 两种 Indy 模式，共 8 个测试任务 | 插桩目录有变化时运行 4 个 Muzzle 分片 |
+| 上游同步、共享构建或 Agent 核心变化 | JDK 8/17/21 × 4 分片 × 两种 Indy 模式，共 24 个测试任务 | 4 个 Muzzle 分片 |
+| 手动勾选 `full` | JDK 8/11/17/21/25/26 × 4 分片 × 两种 Indy 模式，共 48 个测试任务 | Muzzle、最新依赖测试、上游 Linux 容器烟测 |
 
-保留工作流定义不代表已经在 GuanceCloud 环境运行通过。首次远程验证后，再选择实际成功运行的检查名称作为分支保护的必需项。
+三个层级都运行完整 Agent 构建、Beacon 文件名/Manifest/来源校验、维护脚本及打包回归、成品包 HTTP 插桩/TraceContext/OTLP Trace 导出烟测、格式检查、包名等静态检查和许可证清单检查。模块测试复用上游 `listTestsInPartition`，没有按目录删减测试模块，自有增强中已接入 Gradle 的测试也包含在内；没有测试的模块不会因此自动获得功能验收。
+
+分层由[计划脚本](scripts/ci-plan.cjs)根据完整 Git 差异判断，不依赖分支名或 PR 标签。PR 比较 base SHA 与 GitHub 默认检出的合并结果；push 比较 before SHA 与当前提交。缺少基准时扩大到升级验证，合法 SHA 无法读取则直接失败，不默默降级。设置、基线、依赖、共享测试设施和 CI 自身变更会扩大矩阵；具体路径规则以脚本和测试为准。
+
+测试矩阵最多同时运行 4 个任务。新提交会取消同一 PR 旧的 Beacon CI 运行；这不自动取消迁移前已经启动的上游工作流。
+
+Wrapper、按路径触发的元数据检查、依赖审查、CodeQL 和工作流安全扫描继续独立运行，不包含在上表的测试任务数中。它们不被 `Beacon required` 代替，应根据实际启用情况单独配置必需检查。
+
+### 合并门禁
+
+`Beacon required` 汇总本次选中的检查：必需任务失败、取消或意外跳过都不能通过；只有未选中的可选任务允许跳过。管理员应在远程验证后将它设为必需检查，并移除旧上游聚合检查的要求，否则旧入口跳过仍可能影响合并。修改工作流文件本身不会自动修改 GitHub 分支保护。
+
+检查失败需要修正原因，不能为了绿色状态删除检查。CI artifact 是开发制品，不是正式 Release；构建通过也不能替代功能与发行验收。
+
+### 重型验证与测试镜像
+
+在 Actions → Beacon CI → Run workflow 中选择待验证分支，勾选 `full` 执行扩展验证；勾选 `native` 额外调用 GraalVM Native 测试。入口需先进入默认分支才能正常从 Actions 页面手动启动。暂不新增定时全量运行，以免默认持续占用 Runner。
+
+`full` 指这里定义的扩展集合，不等于上游所有任务：Windows、OpenJ9、性能、示例工程和 Gradle 插件专项验证仍需按实际发行支持范围安排，不能据此宣称已支持。完整容器烟测沿用源码中固定的上游镜像版本，需要 Docker 和对应镜像可拉取；若镜像不可用，需修复镜像来源后重试，不允许忽略失败。
+
+继承的 PR 镜像构建入口只在上游仓库运行。Beacon 普通 PR 使用无需容器镜像的[成品烟测](scripts/agent-smoke.cjs)，不重复构建 Payara、Tomcat、Play、gRPC、early-JDK8 等镜像。未来修改测试镜像时，需要先建立 Beacon 自己的镜像构建/托管流程，不能将“跳过镜像构建”误认为镜像变更已验收。
 
 ## 继承工作流的隔离
 
-继承的正式发布、快照/镜像发布、自动改依赖、自动改源码、Issue/PR 管理机器人及尚未适配的定时任务，通过 job 级仓库条件限制在原 OpenTelemetry 仓库运行。旧 Guance 发布流程限定在旧 GuanceCloud 仓库运行。
+继承的主线/PR 大矩阵入口、PR 镜像构建、正式发布、快照/镜像发布、自动改依赖、自动改源码、Issue/PR 管理机器人及尚未适配的定时任务，通过 job 级仓库条件限制在原 OpenTelemetry 仓库运行。旧 Guance 发布流程限定在旧 GuanceCloud 仓库运行。可复用的 Muzzle、最新依赖、Native 测试实现保留，由 Beacon 按上述规则调用。
 
-这些限制保留原任务实现及既有条件，不依靠“没有配置 secret”防止误运行。在 Beacon 及普通下游仓库中，受限任务会跳过；页面仍可能显示相应工作流或跳过的运行。
+这些限制保留原任务实现及既有条件，不依靠“没有配置 secret”防止误运行。在 Beacon 及普通下游仓库中，受限任务会跳过；页面仍可能显示相应工作流或跳过的运行。继承的 FOSSA 配置生成和上游机器人锁文件再生成校验不作为 Beacon 合并门禁；许可证清单与工作流安全检查继续保留。
 
 可复用的发布与故障通知任务也受限制。CodeQL 的扫描保留，其继承的定时失败 Issue 通知只在上游运行。Beacon 尚未启用自动发布、自动上游升级或 PR/Issue 管理机器人。
 

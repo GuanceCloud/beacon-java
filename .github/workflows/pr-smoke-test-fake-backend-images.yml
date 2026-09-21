@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   buildLinux:
+    if: github.repository == 'open-telemetry/opentelemetry-java-instrumentation'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -35,6 +36,7 @@ jobs:
         run: ./gradlew :smoke-tests:images:fake-backend:jibDockerBuild -Djib.httpTimeout=120000 -Djib.console=plain
 
   buildWindows:
+    if: github.repository == 'open-telemetry/opentelemetry-java-instrumentation'
     runs-on: windows-latest
     defaults:
       run:

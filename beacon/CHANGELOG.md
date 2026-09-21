@@ -17,6 +17,7 @@
 
 ### 工程与发行
 
+- 新增 Beacon 专用 CI 入口，普通 PR 缩减 JDK 矩阵、保留全部测试分片与两种 Indy 模式；共享核心及上游基线变化自动扩大验证。重型兼容性测试提供手动入口，上游 PR 镜像构建不再在 Beacon 自动执行；保留独立安全检查，新增成品 Agent 的 HTTP/TraceContext/OTLP Trace 导出烟测。
 - 产品主线使用 `main`，保留完整上游历史和 GuanceCloud 下游增强。
 - 使用独立产品版本，开发起点为 `0.1.0-SNAPSHOT`；这不是已经发布的版本。
 - 完整 Agent 命名为 `beacon-javaagent-<Beacon版本>.jar`，Manifest 记录 Beacon 版本、模块构建版本及上游标签和提交，制品内嵌来源记录。
