@@ -25,7 +25,7 @@ Beacon Java 是 GuanceCloud 基于完整 OpenTelemetry Java Instrumentation 源�
 
 保留上游源码布局、包名、[许可证](LICENSE)及第三方声明。产品版本、上游基线和应用自身的版本分别管理。
 
-## Beacon 自有贡献者
+## Beacon Contributors
 
 <table>
   <tr>
