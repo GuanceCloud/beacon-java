@@ -19,6 +19,7 @@
 - [固定来源与采用基线](upstream.lock.json)：导入记录是历史事实；上游字段记录当前采用的正式发布祖先，不表示代码与官方完全一致。
 - [上游同步](UPSTREAM.md)：首次配置、固定目标提交和同步步骤。
 - [Beacon Changelog](CHANGELOG.md)：产品版本变化、上游升级和兼容说明；具体代码差异和测试证据归 Git/PR。
+- [Beacon 自有贡献者](CONTRIBUTORS.md)：区分 Beacon 下游贡献与继承的上游作者，保留可追溯提交证据。
 - [产品版本](version.properties)与[打包配置](agent.gradle.kts)：定义完整 Agent 的产品身份，不改写上游依赖版本。
 - [贡献指南](../CONTRIBUTING.md)：构建、开发和测试。
 - [CI 状态与上线检查](CI.md)：哪些自动化可以运行，哪些尚未适配。
