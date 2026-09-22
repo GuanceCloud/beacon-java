@@ -71,7 +71,8 @@ class ChatModelTest {
 
   @Test
   void messageSpanAttributeIsTruncatedWithoutChangingItsJsonStructure() {
-    String content = repeatedContent(8193);
+    // The limit falls between the surrogate pair; the emoji must not be split.
+    String content = repeatedContent(8191) + "😀";
     testing.runWithSpan("parent", () -> chatModel.call(new Prompt(content)));
 
     assertThat(
@@ -84,7 +85,7 @@ class ChatModelTest {
         .isEqualTo(
             messageSpanAttribute(
                 "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\""
-                    + repeatedContent(8192)
+                    + repeatedContent(8191)
                     + "\"}]}]"));
     assertThat(
             testing
@@ -94,6 +95,52 @@ class ChatModelTest {
                 .getAttributes()
                 .get(booleanKey("gen_ai.input.messages.truncated")))
         .isEqualTo(messageSpanAttribute(true));
+  }
+
+  @Test
+  void escapesSystemAndInputMessages() {
+    testing.runWithSpan(
+        "parent",
+        () ->
+            chatModel.call(
+                new Prompt(
+                    asList(
+                        new SystemMessage("line\nvalue"), new UserMessage("quoted \"value\"")))));
+
+    assertThat(
+            testing
+                .waitForTraces(1)
+                .get(0)
+                .get(1)
+                .getAttributes()
+                .get(stringKey("gen_ai.system_instructions")))
+        .isEqualTo(messageSpanAttribute("[{\"type\":\"text\",\"content\":\"line\\nvalue\"}]"));
+    assertThat(
+            testing
+                .waitForTraces(1)
+                .get(0)
+                .get(1)
+                .getAttributes()
+                .get(stringKey("gen_ai.input.messages")))
+        .isEqualTo(
+            messageSpanAttribute(
+                "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"quoted \\\"value\\\"\"}]}]"));
+  }
+
+  @Test
+  void escapesOutputMessage() {
+    testing.runWithSpan("parent", () -> new TestChatModel("first\n\"quoted\"").call(prompt()));
+
+    assertThat(
+            testing
+                .waitForTraces(1)
+                .get(0)
+                .get(1)
+                .getAttributes()
+                .get(stringKey("gen_ai.output.messages")))
+        .isEqualTo(
+            messageSpanAttribute(
+                "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"first\\n\\\"quoted\\\"\"}],\"finish_reason\":\"stop\"}]"));
   }
 
   private static void assertTraces() {

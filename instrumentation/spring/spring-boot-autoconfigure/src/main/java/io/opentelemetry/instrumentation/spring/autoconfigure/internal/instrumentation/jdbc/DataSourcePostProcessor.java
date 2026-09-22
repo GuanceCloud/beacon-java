@@ -27,15 +27,19 @@ import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 
 final class DataSourcePostProcessor implements BeanPostProcessor, Ordered {
 
   @Nullable private static final Class<?> ROUTING_DATA_SOURCE_CLASS = getRoutingDataSourceClass();
 
   private final ObjectProvider<OpenTelemetry> openTelemetryProvider;
+  private final Environment environment;
 
-  DataSourcePostProcessor(ObjectProvider<OpenTelemetry> openTelemetryProvider) {
+  DataSourcePostProcessor(
+      ObjectProvider<OpenTelemetry> openTelemetryProvider, Environment environment) {
     this.openTelemetryProvider = openTelemetryProvider;
+    this.environment = environment;
   }
 
   @Nullable
@@ -67,7 +71,12 @@ final class DataSourcePostProcessor implements BeanPostProcessor, Ordered {
               .setQuerySanitizationEnabled(
                   DbConfig.isQuerySanitizationEnabled(openTelemetry, "jdbc"))
               .setCaptureQueryParameters(
-                  JdbcInstrumenterFactory.captureQueryParameters(openTelemetry))
+                  JdbcInstrumenterFactory.captureQueryParameters(openTelemetry)
+                      || environment.getProperty("otel.jdbc.sql.obfuscation", Boolean.class, false)
+                      || environment.getProperty(
+                          "otel.instrumentation.jdbc.experimental.capture-query-parameters",
+                          Boolean.class,
+                          false))
               .setTransactionInstrumenterEnabled(
                   config.get("transaction/development").getBoolean("enabled", false))
               .setDataSourceInstrumenterEnabled(
