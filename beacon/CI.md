@@ -20,7 +20,7 @@ Wrapper、按路径触发的元数据检查、依赖审查、CodeQL 和工作流
 
 ### 合并门禁
 
-`Beacon required` 汇总本次选中的检查：必需任务失败、取消或意外跳过都不能通过；只有未选中的可选任务允许跳过。`main` 的 GitHub Ruleset 已将它设为必需检查，并要求至少一位代码所有者批准；新提交会使旧批准失效。修改工作流文件本身不会自动修改 GitHub 分支保护。
+`Beacon required` 汇总本次选中的检查：必需任务失败、取消或意外跳过都不能通过；只有未选中的可选任务允许跳过。`main` 的 GitHub Ruleset 已将它设为必需检查，当前不要求 PR 批准。修改工作流文件本身不会自动修改 GitHub 分支保护。
 
 检查失败需要修正原因，不能为了绿色状态删除检查。CI artifact 是开发制品，不是正式 Release；构建通过也不能替代功能与发行验收。
 
@@ -54,7 +54,7 @@ Beacon CI 会上传 Agent 和测试报告，因此该工作流中的 Node 包管
 
 ## 仍需确认
 
-- 正式发行的审批人及 GitHub Environment；`main` 合并评审由两位代码所有者负责。
+- 正式发行的审批人及 GitHub Environment；`main` 当前不强制代码所有者批准。
 - 正式制品托管、签名与发布凭证；产品版本、文件名和 Manifest 由 [Beacon 打包配置](agent.gradle.kts)管理。
 - 实际支持矩阵与构建、运行验收结果。
 
