@@ -68,4 +68,4 @@ node beacon/scripts/agent-smoke.cjs javaagent/build/libs/beacon-javaagent-<Beaco
 
 ## 上线与发行
 
-首次 GitHub 上线前完成 [CI 检查](beacon/CI.md)，正式发行按[发行流程](beacon/RELEASING.md)执行。维护者名单与远程分支保护需由仓库管理员确认，不沿用上游组织的 CODEOWNERS。
+首次 GitHub 上线前完成 [CI 检查](beacon/CI.md)，正式发行按[发行流程](beacon/RELEASING.md)执行。`main` 分支保护与 Beacon 维护者见 [CI 说明](beacon/CI.md)，不沿用上游组织的 CODEOWNERS。
