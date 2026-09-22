@@ -1,3 +1,2 @@
-# Beacon maintainers must be confirmed by the GuanceCloud repository administrators.
-# No CODEOWNERS rule is active until valid maintainers with repository access are assigned.
-# Do not inherit ownership from the upstream OpenTelemetry organization.
+# Beacon Java maintainers. Keep repository write access for both owners.
+* @lrwh @songlonqi-java
