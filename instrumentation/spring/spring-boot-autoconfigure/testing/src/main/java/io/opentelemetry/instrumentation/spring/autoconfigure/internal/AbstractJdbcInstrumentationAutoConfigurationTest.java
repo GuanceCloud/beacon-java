@@ -82,8 +82,7 @@ public abstract class AbstractJdbcInstrumentationAutoConfigurationTest {
                           trace.hasSpansSatisfyingExactly(
                               span ->
                                   span.hasAttribute(maybeStable(DB_STATEMENT), "SELECT ?")
-                                      .hasAttribute(
-                                          DB_QUERY_PARAMETER.getAttributeKey("0"), "1")));
+                                      .hasAttribute(DB_QUERY_PARAMETER.getAttributeKey("0"), "1")));
             });
   }
 }

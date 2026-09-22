@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * This class is internal and is hence not for public use. Its APIs are unstable and can change at
@@ -33,7 +34,7 @@ public class JdbcInstrumentationAutoConfiguration {
   @Bean
   // static to avoid "is not eligible for getting processed by all BeanPostProcessors" warning
   static DataSourcePostProcessor dataSourcePostProcessor(
-      ObjectProvider<OpenTelemetry> openTelemetryProvider) {
-    return new DataSourcePostProcessor(openTelemetryProvider);
+      ObjectProvider<OpenTelemetry> openTelemetryProvider, Environment environment) {
+    return new DataSourcePostProcessor(openTelemetryProvider, environment);
   }
 }

@@ -19,6 +19,16 @@ import reactor.core.publisher.Flux;
 
 @SuppressWarnings("PublicApiNamedStreamShouldReturnStream")
 public class TestChatModel implements ChatModel {
+  private final String responseContent;
+
+  public TestChatModel() {
+    this("A trace represents an end-to-end request.");
+  }
+
+  public TestChatModel(String responseContent) {
+    this.responseContent = responseContent;
+  }
+
   @Override
   public ChatResponse call(Prompt prompt) {
     return response();
@@ -29,10 +39,10 @@ public class TestChatModel implements ChatModel {
     return Flux.just(response());
   }
 
-  private static ChatResponse response() {
+  private ChatResponse response() {
     Generation generation =
         new Generation(
-            new AssistantMessage("A trace represents an end-to-end request."),
+            new AssistantMessage(responseContent),
             ChatGenerationMetadata.builder().finishReason("stop").build());
     ChatResponseMetadata metadata =
         ChatResponseMetadata.builder()

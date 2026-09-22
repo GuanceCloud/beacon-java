@@ -10,7 +10,9 @@ jobs:
     if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Verify prerequisites
         run: |
@@ -32,11 +34,13 @@ jobs:
     needs:
       - prereqs
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # history is needed to allow fast-forward push below in case
           # re-running this workflow after merging additional PRs to main
           fetch-depth: 0
+          # zizmor: ignore[artipacked] Credentials are required by the branch pushes below.
+          persist-credentials: true
 
       - name: Create release branch
         run: |
@@ -78,7 +82,7 @@ jobs:
 
       - name: Create pull request against the release branch
         env:
-          # not using secrets.GITHUB_TOKEN since pull requests from that token do not run workflows
+          # pull requests from secrets.GITHUB_TOKEN do not run workflows
           GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         run: |
           message="Prepare release $VERSION"
@@ -87,9 +91,10 @@ jobs:
           git checkout -b $branch
           git commit -a -m "$message"
           git push --set-upstream origin $branch
-          gh pr create --title "[$RELEASE_BRANCH_NAME] $message" \
-                       --body "$message." \
-                       --base $RELEASE_BRANCH_NAME
+          gh pr create \
+            --title "[$RELEASE_BRANCH_NAME] $message" \
+            --body "$message." \
+            --base $RELEASE_BRANCH_NAME
 
   create-pull-request-against-main:
     if: ${{ github.repository == 'open-telemetry/opentelemetry-java-instrumentation' }}
@@ -99,7 +104,10 @@ jobs:
     needs:
       - prereqs
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # zizmor: ignore[artipacked] Credentials are required by the branch push below.
+          persist-credentials: true
 
       - name: Set environment variables
         run: |
@@ -137,7 +145,7 @@ jobs:
 
       - name: Create pull request against main
         env:
-          # not using secrets.GITHUB_TOKEN since pull requests from that token do not run workflows
+          # pull requests from secrets.GITHUB_TOKEN do not run workflows
           GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         run: |
           message="Update version to $NEXT_VERSION"
@@ -147,6 +155,7 @@ jobs:
           git checkout -b $branch
           git commit -a -m "$message"
           git push --set-upstream origin $branch
-          gh pr create --title "$message" \
-                       --body "$body" \
-                       --base main
+          gh pr create \
+            --title "$message" \
+            --body "$body" \
+            --base main

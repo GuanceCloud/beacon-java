@@ -1,0 +1,240 @@
+name: Beacon CI
+
+on:
+  pull_request:
+    branches: [main, 'release/*']
+  push:
+    branches: [main, 'release/*']
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run expanded JDK matrix, latest dependencies and upstream Linux smoke tests
+        type: boolean
+        default: false
+      native:
+        description: Also run GraalVM native tests (requires Docker)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: beacon-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  plan:
+    if: github.repository == 'GuanceCloud/beacon-java'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      muzzle: ${{ steps.plan.outputs.muzzle }}
+      full: ${{ steps.plan.outputs.full }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: ''
+          package-manager-cache: false
+      - id: plan
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_FULL: ${{ inputs.full || false }}
+        run: node beacon/scripts/ci-plan.cjs
+
+  build:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: .github/scripts/gha-free-disk-space.sh
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: ''
+          package-manager-cache: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-disabled: true
+      - name: Test Beacon maintenance and packaging
+        run: |
+          bash -n beacon/scripts/fetch-upstream-tag.sh
+          node --test beacon/scripts/*.test.cjs
+      - name: Assemble and verify complete Beacon Agent
+        run: ./gradlew :javaagent:assemble
+      - name: Smoke test the packaged Agent
+        shell: bash
+        run: |
+          version=$(sed -n 's/^version=//p' beacon/version.properties)
+          node beacon/scripts/agent-smoke.cjs "javaagent/build/libs/beacon-javaagent-$version.jar"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: beacon-javaagent
+          path: javaagent/build/libs/beacon-javaagent-*.jar
+          if-no-files-found: error
+          retention-days: 7
+
+  quality:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: .github/scripts/gha-free-disk-space.sh
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-disabled: true
+      - name: Format and static checks
+        run: |
+          ./gradlew spotlessCheck
+          ./gradlew -p conventions spotlessCheck
+          ./gradlew checkstyleMain checkstyleTest
+          .github/scripts/check-package-names.sh
+          .github/scripts/check-javaagent-suppression-keys.sh
+          .github/scripts/check-latest-dep-test-overrides.sh
+      - name: License inventory
+        run: |
+          ./gradlew generateLicenseReport --no-build-cache
+          git add -- licenses
+          git diff --cached --exit-code -- licenses
+
+  tests:
+    name: tests (JDK ${{ matrix.java }}, indy ${{ matrix.indy }}, part ${{ matrix.partition }})
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: .github/scripts/gha-free-disk-space.sh
+      - id: test-java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: ''
+          package-manager-cache: false
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-disabled: true
+      - name: Run upstream test partition (includes Beacon modules)
+        shell: bash
+        env:
+          TEST_PARTITION: ${{ matrix.partition }}
+          TEST_JAVA: ${{ matrix.java }}
+          TEST_INDY: ${{ matrix.indy }}
+          TEST_JAVA_PATH: ${{ steps.test-java.outputs.path }}
+        run: |
+          ./gradlew check -x spotlessCheck listTestsInPartition "-PtestPartition=$TEST_PARTITION"
+          mapfile -t tasks < test-tasks.txt
+          test "${#tasks[@]}" -gt 0
+          for task in "${tasks[@]}"; do
+            [[ "$task" =~ ^:[A-Za-z0-9_.:-]+$ ]] || exit 1
+          done
+          ./gradlew "${tasks[@]}" "-PtestJavaVersion=$TEST_JAVA" -PtestJavaVM=hotspot \
+            "-PtestIndy=$TEST_INDY" "-Porg.gradle.java.installations.paths=$TEST_JAVA_PATH" \
+            -Porg.gradle.java.installations.auto-download=false
+      - name: Upload test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tests-${{ matrix.java }}-${{ matrix.indy }}-${{ matrix.partition }}
+          path: |
+            **/build/test-results/**/TEST-*.xml
+            **/build/reports/tests/**
+          retention-days: 7
+
+  muzzle:
+    needs: plan
+    if: needs.plan.outputs.muzzle == 'true'
+    uses: ./.github/workflows/reusable-muzzle.yml
+
+  latest-deps:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    uses: ./.github/workflows/reusable-test-latest-deps.yml
+
+  native:
+    needs: plan
+    if: github.event_name == 'workflow_dispatch' && inputs.native
+    uses: ./.github/workflows/reusable-native-tests.yml
+
+  upstream-smoke:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: .github/scripts/gha-free-disk-space.sh
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-disabled: true
+      - run: ./gradlew :smoke-tests:test -PskipOpenJ9SmokeTests=true
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: upstream-smoke-reports
+          path: smoke-tests/build/reports/tests/
+          retention-days: 7
+
+  required:
+    name: Beacon required
+    needs: [plan, build, quality, tests, muzzle, latest-deps, native, upstream-smoke]
+    if: ${{ always() && github.repository == 'GuanceCloud/beacon-java' }}
+    runs-on: ubuntu-latest
+    env:
+      NEEDS_JSON: ${{ toJSON(needs) }}
+      NATIVE: ${{ inputs.native || false }}
+    steps:
+      - name: Require all selected checks to succeed
+        run: |
+          node <<'NODE'
+          const needs = JSON.parse(process.env.NEEDS_JSON);
+          const required = ['plan', 'build', 'quality', 'tests'];
+          if (needs.plan.outputs.muzzle === 'true') required.push('muzzle');
+          if (needs.plan.outputs.full === 'true') required.push('latest-deps', 'upstream-smoke');
+          if (process.env.NATIVE === 'true') required.push('native');
+          for (const job of required) {
+            if (needs[job].result !== 'success') {
+              console.error(job + ': ' + needs[job].result);
+              process.exitCode = 1;
+            }
+          }
+          NODE

@@ -36,9 +36,7 @@ class AgentToolNodeInstrumentation implements TypeInstrumentation {
                 takesArgument(
                     0, named("org.springframework.ai.chat.messages.AssistantMessage$ToolCall")))
             .and(takesArgument(4, boolean.class))
-            .and(
-                returns(
-                    named("com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse"))),
+            .and(returns(named("com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse"))),
         getClass().getName() + "$ToolCallAdvice");
   }
 

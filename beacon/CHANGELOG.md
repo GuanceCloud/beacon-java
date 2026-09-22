@@ -4,8 +4,20 @@
 
 ## Unreleased
 
+### 能力移除
+
+- 暂时移除 Taobao HSF 的 Javaagent 和 library 模块及 `hsf-sdk` 依赖，解除构建对开发机本地制品的依赖。当前 Agent 不再提供 HSF 自动插桩；原 `otel.instrumentation.hsf.enabled`、`otel.instrumentation.hsf-client.enabled` 开关无法恢复此能力。依赖 HSF 链路采集的使用者需在恢复支持并完成验证后再迁移。历史源码保留在 Git 历史中。
+
+### 上游同步
+
+- 合入官方 OTel Java Instrumentation [v2.31.1](https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/tag/v2.31.1)，固定提交 `8ad06a082e051f366f19c16ad95a7b68edf30afd`；采用其配套 SDK 1.65.0、依赖约束及 Gradle Wrapper。
+- 保留 JDBC 旧配置兼容、Profiling、Spring AI、Alibaba Agent 等下游实现，以及 Beacon 打包与工作流隔离；HSF 暂时移除，见上述说明。Beacon 产品版本仍为 `0.1.0-SNAPSHOT`，不是一次产品发行。
+- 上游 2.31.x 含非稳定 API 变更及配置弃用，升级时查看根目录[上游 Changelog](../CHANGELOG.md)；2.31.1 修复 Spring Boot autoconfigure/starter 的稳定语义约定 API 编译依赖。
+- 修正 Profiling 元数据的 YAML 描述语法和默认值表示，补充文件导出路径的实际默认值；不改变运行时配置或行为。
+
 ### 工程与发行
 
+- 新增 Beacon 专用 CI 入口，普通 PR 缩减 JDK 矩阵、保留全部测试分片与两种 Indy 模式；共享核心及上游基线变化自动扩大验证。重型兼容性测试提供手动入口，上游 PR 镜像构建不再在 Beacon 自动执行；保留独立安全检查，新增成品 Agent 的 HTTP/TraceContext/OTLP Trace 导出烟测。
 - 产品主线使用 `main`，保留完整上游历史和 GuanceCloud 下游增强。
 - 使用独立产品版本，开发起点为 `0.1.0-SNAPSHOT`；这不是已经发布的版本。
 - 完整 Agent 命名为 `beacon-javaagent-<Beacon版本>.jar`，Manifest 记录 Beacon 版本、模块构建版本及上游标签和提交，制品内嵌来源记录。

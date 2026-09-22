@@ -23,6 +23,7 @@ java -version
 - 实现与回归测试在同一 PR 提交，说明用户可见影响、配置变化和兼容范围。
 - 普通功能 PR 可按团队规则整理提交；上游同步 PR 必须保留上游祖先关系。
 - 用户可见变化写入 [Beacon Changelog](beacon/CHANGELOG.md) 的 `Unreleased`；详细实现和测试证据保留在 PR/CI，不另建差异台账。破坏性变化必须提供迁移说明。
+- Beacon 自有贡献者名单见[独立维护文档](beacon/CONTRIBUTORS.md)；合入上游提交不自动将其作者列为 Beacon 自有贡献者。
 - 根目录 [CHANGELOG.md](CHANGELOG.md)保留上游日志；Beacon 日志不重复抄录上游全部变化。当前日志手工维护，不依赖上游标签机器人。
 
 ## 技术参考
@@ -44,6 +45,7 @@ java -version
 ```bash
 bash -n beacon/scripts/fetch-upstream-tag.sh
 node --test beacon/scripts/fetch-upstream-tag.test.cjs
+node --test beacon/scripts/ci-plan.test.cjs beacon/scripts/ci-workflow.test.cjs
 ```
 
 脚本测试只使用临时本地 Git 仓库，不访问网络，不运行源码合并或发布。
@@ -55,6 +57,14 @@ node --test beacon/scripts/agent-packaging.test.cjs
 ```
 
 该测试用仓库 Gradle Wrapper 在临时最小工程中执行实际打包配置，验证产品版本、文件名、Manifest 和错误拒绝；首次运行可能需要下载 Gradle。它不构建完整 Agent，不能代替 `:javaagent:assemble`。
+
+完整 Agent 构建后，运行无 Docker 的 HTTP 插桩与 OTLP Trace 导出烟测：
+
+```bash
+node beacon/scripts/agent-smoke.cjs javaagent/build/libs/beacon-javaagent-<Beacon版本>.jar
+```
+
+将占位符替换为 `beacon/version.properties` 中的版本。CI 分层及手动扩展验证见 [CI 说明](beacon/CI.md)。
 
 ## 上线与发行
 

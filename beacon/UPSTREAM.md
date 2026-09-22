@@ -36,7 +36,7 @@ Remote、refspec 和抓取产生的远程跟踪引用属于本地配置，不随
 ```bash
 # 仅示范如何核对当前已登记基线；升级时换成评审确定的标签与提交。
 bash beacon/scripts/fetch-upstream-tag.sh \
-  v2.30.0 080c1d32ca676ba7b0210c21b60cce8e7ac39058
+  v2.31.1 8ad06a082e051f366f19c16ad95a7b68edf30afd
 ```
 
 [抓取脚本](scripts/fetch-upstream-tag.sh)将单个标签抓入临时引用，检查它确实指向指定提交；若同名本地上游引用已存在，还会比较完整标签对象，拒绝改写。只有全部通过，才更新 `refs/upstream-tags/<tag>`。脚本不会合并代码、修改基线文件或创建正式发行标签。

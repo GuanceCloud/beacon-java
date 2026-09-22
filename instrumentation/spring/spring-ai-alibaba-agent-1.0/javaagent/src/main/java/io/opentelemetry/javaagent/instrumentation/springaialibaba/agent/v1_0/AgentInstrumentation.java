@@ -93,9 +93,7 @@ class AgentInstrumentation implements TypeInstrumentation {
   public static class StreamAdvice {
     @Advice.OnMethodExit(suppress = Throwable.class, inline = false)
     @Advice.AssignReturned.ToReturned
-    public static Flux<?> onExit(
-        @Advice.This Agent agent,
-        @Advice.Return Flux<?> publisher) {
+    public static Flux<?> onExit(@Advice.This Agent agent, @Advice.Return Flux<?> publisher) {
       if (publisher == null) {
         return null;
       }

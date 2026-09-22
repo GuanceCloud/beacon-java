@@ -17,11 +17,12 @@ import javax.annotation.Nullable;
  * any time.
  */
 @SuppressWarnings("UnusedTypeParameter")
-public final class JdbcAttributes<REQUEST, RESPONSE> implements AttributesExtractor<REQUEST, RESPONSE> {
+public final class JdbcAttributes<REQUEST, RESPONSE>
+    implements AttributesExtractor<REQUEST, RESPONSE> {
 
-  private  DbSetArgs args;
+  private DbSetArgs args;
 
-  private JdbcAttributes(){}
+  private JdbcAttributes() {}
 
   public static JdbcAttributes<DbRequest, Void> create(DbSetArgs args) {
     JdbcAttributes<DbRequest, Void> j = new JdbcAttributes<>();
@@ -35,23 +36,23 @@ public final class JdbcAttributes<REQUEST, RESPONSE> implements AttributesExtrac
 
   @Override
   public void onStart(AttributesBuilder attributes, Context parentContext, REQUEST request) {
-    if (this.args == null || this.args.getArgs()==null){
+    if (this.args == null || this.args.getArgs() == null) {
       return;
     }
     StringBuilder sb = new StringBuilder();
-    for (Map.Entry<Integer,String> entry : args.getArgs().entrySet()) {
-      // internalSet(attributes, AttributeKey.stringKey("origin_sql_"+entry.getKey()),entry.getValue());
-      sb.append("index_").
-          append(entry.getKey()).
-          append(":").
-          append(entry.getValue()).
-          append(", ");
+    for (Map.Entry<Integer, String> entry : args.getArgs().entrySet()) {
+      // internalSet(attributes,
+      // AttributeKey.stringKey("origin_sql_"+entry.getKey()),entry.getValue());
+      sb.append("index_").append(entry.getKey()).append(":").append(entry.getValue()).append(", ");
     }
     attributes.put(AttributeKey.stringKey("db_args"), sb.toString());
   }
 
   @Override
-  public void onEnd(AttributesBuilder attributes, Context context, REQUEST request,
-      @Nullable RESPONSE response, @Nullable Throwable error) {
-  }
+  public void onEnd(
+      AttributesBuilder attributes,
+      Context context,
+      REQUEST request,
+      @Nullable RESPONSE response,
+      @Nullable Throwable error) {}
 }

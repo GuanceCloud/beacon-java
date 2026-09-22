@@ -18,3 +18,7 @@ dependencies {
   testInstrumentation(project(":instrumentation:spring:spring-ai-1.0:javaagent"))
   testInstrumentation(project(":instrumentation:reactor:reactor-3.1:javaagent"))
 }
+
+otelJava {
+  minJavaVersionSupported.set(JavaVersion.VERSION_17)
+}

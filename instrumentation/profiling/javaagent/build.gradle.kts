@@ -13,6 +13,10 @@ dependencies {
   compileOnly("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
 }
 
+otelJava {
+  minJavaVersionSupported.set(JavaVersion.VERSION_11)
+}
+
 tasks {
   test {
     val outputDir = profilingTestOutputDir.get().asFile

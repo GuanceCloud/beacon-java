@@ -8,8 +8,8 @@ package io.opentelemetry.javaagent.instrumentation.jdbc;
 import static io.opentelemetry.javaagent.extension.matcher.AgentElementMatchers.hasClassesNamed;
 import static io.opentelemetry.javaagent.extension.matcher.AgentElementMatchers.implementsInterface;
 import static io.opentelemetry.javaagent.instrumentation.jdbc.JdbcSingletons.CAPTURE_QUERY_PARAMETERS;
-//import static io.opentelemetry.javaagent.instrumentation.jdbc.JdbcSingletons.resetArgs;
-//import static io.opentelemetry.javaagent.instrumentation.jdbc.JdbcSingletons.setArg;
+// import static io.opentelemetry.javaagent.instrumentation.jdbc.JdbcSingletons.resetArgs;
+// import static io.opentelemetry.javaagent.instrumentation.jdbc.JdbcSingletons.setArg;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -21,7 +21,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesNoArguments;
 
 import io.opentelemetry.instrumentation.jdbc.internal.JdbcData;
 import io.opentelemetry.javaagent.bootstrap.CallDepth;
-//import io.opentelemetry.javaagent.bootstrap.internal.AgentInstrumentationConfig;
+// import io.opentelemetry.javaagent.bootstrap.internal.AgentInstrumentationConfig;
 import io.opentelemetry.javaagent.extension.instrumentation.TypeInstrumentation;
 import io.opentelemetry.javaagent.extension.instrumentation.TypeTransformer;
 import java.sql.PreparedStatement;
@@ -56,7 +56,6 @@ class PreparedStatementInstrumentation implements TypeInstrumentation {
             .and(isPublic()),
         getClass().getName() + "$PreparedStatementAdvice");
     transformer.applyAdviceToMethod(
-
         named("addBatch").and(takesNoArguments()).and(isPublic()),
         getClass().getName() + "$AddBatchAdvice");
     transformer.applyAdviceToMethod(

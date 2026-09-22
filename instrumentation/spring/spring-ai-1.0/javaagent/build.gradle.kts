@@ -16,6 +16,10 @@ dependencies {
   implementation(project(":instrumentation:reactor:reactor-3.1:library"))
 }
 
+otelJava {
+  minJavaVersionSupported.set(JavaVersion.VERSION_17)
+}
+
 tasks {
   withType<Test>().configureEach {
     systemProperty("collectMetadata", otelProps.collectMetadata)
