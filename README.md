@@ -24,3 +24,22 @@ Beacon Java 是 GuanceCloud 基于完整 OpenTelemetry Java Instrumentation 源�
 - [导入时的上游来源说明](https://github.com/GuanceCloud/opentelemetry-java-instrumentation/blob/73a8f7edd0415f0e8651d3d1f3f295e6e6d4d1ea/README.md)
 
 保留上游源码布局、包名、[许可证](LICENSE)及第三方声明。产品版本、上游基线和应用自身的版本分别管理。
+
+## Beacon Contributors
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/lrwh">
+        <img src="https://avatars.githubusercontent.com/u/17264378?v=4" width="72" height="72" alt="lrwh 头像"><br>
+        lrwh
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/songlonqi-java">
+        <img src="https://avatars.githubusercontent.com/u/31207055?v=4" width="72" height="72" alt="songlonqi-java 头像"><br>
+        songlonqi-java
+      </a>
+    </td>
+  </tr>
+</table>
